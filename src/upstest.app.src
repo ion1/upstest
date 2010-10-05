@@ -1,0 +1,11 @@
+{application, upstest,
+ [{description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib]},
+  {mod, {upstest_app, []}},
+  {env, []}]}.
+
+% vim:set et sw=2 sts=2:
