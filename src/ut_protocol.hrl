@@ -34,15 +34,18 @@
 
 -record (ut_discover_query,    {protocol, each_segment}).
 -record (ut_discover_response, {protocol, server_ipv4_addr, server_name,
-                                have_multip_segs, segment_id, segment_name}).
+                                have_multip_segs, segment_id, segment_name,
+                                unknown_a=nil, unknown_4c=nil}).
 
--record (ut_shutdown_query,    {protocol, client_id}).
--record (ut_shutdown_response, {protocol, shutdown_delay}).
+-record (ut_shutdown_query,    {protocol, client_id,
+                                unknown_6=nil, unknown_8=nil, unknown_12=nil}).
+-record (ut_shutdown_response, {protocol, shutdown_delay,
+                                unknown_6=nil, unknown_a=nil}).
 
--record (ut_shutdown_cancel_query,    {protocol}).
+-record (ut_shutdown_cancel_query,    {protocol, unknown_6=nil}).
 -record (ut_shutdown_cancel_response, {protocol}).
 
--record (ut_get_time_query,    {protocol}).
+-record (ut_get_time_query,    {protocol, unknown_6=nil}).
 -record (ut_get_time_response, {protocol, time}).
 
 % vim:set et sw=2 sts=2:

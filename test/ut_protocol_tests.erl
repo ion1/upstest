@@ -151,19 +151,24 @@ discover_test_ () ->
     [{Protocol, EachSegment} || Protocol    <- [1, 2],
                                 EachSegment <- [false, true]]),
 
+  UnknownA  = 42,
+  Unknown4C = 43,
+
   DecodeTests = [
     test_decode (#ut_discover_response{protocol         = 1,
                                        server_ipv4_addr = ?IPV4_ADDR,
                                        server_name      = ?SERVER_NAME,
                                        have_multip_segs = false,
                                        segment_id       = 16#ffff,
-                                       segment_name     = <<"All">>},
+                                       segment_name     = <<"All">>,
+                                       unknown_a        = UnknownA,
+                                       unknown_4c       = Unknown4C},
                  <<?ut_server_tag, ?ut_protocol_1_tag,
                    ?ut_discover_tag, ?ut_response_tag,
                    ?IPV4_ADDR/bytes,
-                   -1:16, % Unknown.
+                   UnknownA:16, % Unknown.
                    (?M:pad (?SERVER_NAME, 16#40))/bytes,
-                   -1:16#10/unit:8>>, % Unknown. Padding or perhaps a name.
+                   Unknown4C:16#10/unit:8>>, % Unknown. Padding or perhaps a name.
                  16#5c),
 
     lists:map (fun ({HaveMultipSegsByte, SegmentID, SegmentName}) ->
@@ -176,11 +181,12 @@ discover_test_ () ->
                                            server_name      = ?SERVER_NAME,
                                            have_multip_segs = HaveMultipSegs,
                                            segment_id       = SegmentID,
-                                           segment_name     = SegmentName},
+                                           segment_name     = SegmentName,
+                                           unknown_a        = UnknownA},
                      <<?ut_server_tag, ?ut_protocol_2_tag,
                        ?ut_discover_tag, ?ut_response_tag,
                        ?IPV4_ADDR/bytes,
-                       -1:16, % Unknown
+                       UnknownA:16, % Unknown
                        (?M:pad (?SERVER_NAME, 16#40))/bytes,
                        0:32, HaveMultipSegsByte, 0,
                        SegmentID:16, (?M:pad (SegmentName, 16#10))/bytes>>,
@@ -194,24 +200,32 @@ discover_test_ () ->
 
 shutdown_test_ () ->
   DecodeTests = lists:map (fun (Protocol) ->
-      test_decode (#ut_shutdown_query{protocol  = Protocol,
-                                      client_id = ?CLIENT_ID},
+      Unknown6  = 42,
+      Unknown8  = 43,
+      Unknown12 = 44,
+      test_decode (#ut_shutdown_query{protocol   = Protocol,
+                                      client_id  = ?CLIENT_ID,
+                                      unknown_6  = Unknown6,
+                                      unknown_8  = Unknown8,
+                                      unknown_12 = Unknown12},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_shutdown_tag, ?ut_query_tag,
-                     -1:16, % Unknown
-                     -1, % Unknown
+                     Unknown6:16, % Unknown
+                     Unknown8, % Unknown
                      0, ?CLIENT_ID/bytes, 0:32,
-                     -1:16, % Unknown
+                     Unknown12:16, % Unknown
                      0:16#10/unit:8>>,
                    16#24) end,
     [1, 2]),
 
   EncodeTests = lists:map (fun (Protocol) ->
       ShutdownDelay = 180,
-      Unknown6 = 1,
-      UnknownA = 1,
-      test_encode (#ut_shutdown_response{protocol = Protocol,
-                                         shutdown_delay = ShutdownDelay},
+      Unknown6 = 42,
+      UnknownA = 43,
+      test_encode (#ut_shutdown_response{protocol       = Protocol,
+                                         shutdown_delay = ShutdownDelay,
+                                         unknown_6      = Unknown6,
+                                         unknown_a      = UnknownA},
                    <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_shutdown_tag, ?ut_response_tag,
                      Unknown6:16, % Unknown
@@ -225,10 +239,12 @@ shutdown_test_ () ->
 
 shutdown_cancel_test_ () ->
   DecodeTests = lists:map (fun (Protocol) ->
-      test_decode (#ut_shutdown_cancel_query{protocol = Protocol},
+      Unknown6 = 42,
+      test_decode (#ut_shutdown_cancel_query{protocol  = Protocol,
+                                             unknown_6 = Unknown6},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_shutdown_cancel_tag, ?ut_query_tag,
-                     -1:16#16/unit:8>>, % Unknown. Padding?
+                     Unknown6:16#16/unit:8>>, % Unknown. Padding?
                    16#1c) end,
     [1, 2]),
 
@@ -244,10 +260,12 @@ shutdown_cancel_test_ () ->
 
 get_time_test_ () ->
   DecodeTests = lists:map (fun (Protocol) ->
-      test_decode (#ut_get_time_query{protocol = Protocol},
+      Unknown6 = 42,
+      test_decode (#ut_get_time_query{protocol  = Protocol,
+                                      unknown_6 = Unknown6},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_get_time_tag, ?ut_query_tag,
-                     -1:16#10/unit:8>>, % Unknown. Padding?
+                     Unknown6:16#10/unit:8>>, % Unknown. Padding?
                    16#16) end,
     [1, 2]),
 

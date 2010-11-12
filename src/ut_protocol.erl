@@ -60,11 +60,10 @@ encode (#ut_discover_query{protocol = Protocol, each_segment = EachSegment}) ->
 
 % Encode shutdown response.
 
-encode (#ut_shutdown_response{protocol = Protocol,
-                              shutdown_delay = ShutdownDelay}) ->
-
-  Unknown6 = 1,
-  UnknownA = 1,
+encode (#ut_shutdown_response{protocol       = Protocol,
+                              shutdown_delay = ShutdownDelay,
+                              unknown_6      = Unknown6,
+                              unknown_a      = UnknownA}) ->
 
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
     ?ut_shutdown_tag, ?ut_response_tag,
@@ -124,14 +123,16 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
 decode (<<?ut_server_tag, ?ut_protocol_1_tag,
           ?ut_discover_tag, ?ut_response_tag,
           ServerIPv4Addr:32/bits, UnknownA:16, ServerName:16#40/bytes,
-          Unknown4C:16#10/bytes>>) ->
+          Unknown4C:16#10/unit:8>>) ->
 
   #ut_discover_response{protocol         = 1,
                         server_ipv4_addr = ServerIPv4Addr,
                         server_name      = unpad (ServerName),
                         have_multip_segs = false,
                         segment_id       = 16#ffff,
-                        segment_name     = <<"All">>};
+                        segment_name     = <<"All">>,
+                        unknown_a        = UnknownA,
+                        unknown_4c       = Unknown4C};
 
 decode (<<?ut_server_tag, ?ut_protocol_2_tag,
           ?ut_discover_tag, ?ut_response_tag,
@@ -147,7 +148,8 @@ decode (<<?ut_server_tag, ?ut_protocol_2_tag,
                         server_name      = unpad (ServerName),
                         have_multip_segs = HaveMultipSegs,
                         segment_id       = SegmentID,
-                        segment_name     = unpad (SegmentName)};
+                        segment_name     = unpad (SegmentName),
+                        unknown_a        = UnknownA};
 
 % Decode shutdown query.
 
@@ -156,22 +158,27 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           Unknown6:16, Unknown8, 0, ClientID:32/bits, 0:32, Unknown12:16,
           0:16#10/unit:8>>) ->
 
-  #ut_shutdown_query{protocol  = decode_protocol (Protocol),
-                     client_id = ClientID};
+  #ut_shutdown_query{protocol   = decode_protocol (Protocol),
+                     client_id  = ClientID,
+                     unknown_6  = Unknown6,
+                     unknown_8  = Unknown8,
+                     unknown_12 = Unknown12};
 
 % Decode shutdown_cancel query.
 
 decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
-          ?ut_shutdown_cancel_tag, ?ut_query_tag, Unknown6:16#16/bytes>>) ->
+          ?ut_shutdown_cancel_tag, ?ut_query_tag, Unknown6:16#16/unit:8>>) ->
 
-  #ut_shutdown_cancel_query{protocol = decode_protocol (Protocol)};
+  #ut_shutdown_cancel_query{protocol  = decode_protocol (Protocol),
+                            unknown_6 = Unknown6};
 
 % Decode get_time query.
 
 decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
-          ?ut_get_time_tag, ?ut_query_tag, Unknown6:16#10/bytes>>) ->
+          ?ut_get_time_tag, ?ut_query_tag, Unknown6:16#10/unit:8>>) ->
 
-  #ut_get_time_query{protocol = decode_protocol (Protocol)}.
+  #ut_get_time_query{protocol  = decode_protocol (Protocol),
+                     unknown_6 = Unknown6}.
 
 % Private functions.
 
