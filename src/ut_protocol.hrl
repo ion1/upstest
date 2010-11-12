@@ -25,4 +25,7 @@
 -record (ut_register_query,    {protocol, segment_id, time}).
 -record (ut_register_response, {protocol, server_name}).
 
+-record (ut_unregister_query,    {protocol}).
+-record (ut_unregister_response, {protocol}).
+
 % vim:set et sw=2 sts=2:

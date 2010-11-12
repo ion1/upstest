@@ -26,7 +26,15 @@ encode (#ut_register_query{protocol   = Protocol,
     2 -> {<<?ut_protocol_2_tag>>, <<0:16#30/unit:8>>} end,
 
   <<?ut_client_tag, ProtocolTag/bytes, ?ut_register_tag, ?ut_query_tag,
-    Time:32, SegmentId:16, Time:32, Padding/bytes>>.
+    Time:32, SegmentId:16, Time:32, Padding/bytes>>;
+
+encode (#ut_unregister_query{protocol = Protocol}) ->
+  ProtocolTag = case Protocol of
+    1 -> <<?ut_protocol_1_tag>>;
+    2 -> <<?ut_protocol_2_tag>> end,
+
+  <<?ut_client_tag, ProtocolTag/bytes, ?ut_unregister_tag, ?ut_query_tag,
+    0:16#10/unit:8>>.
 
 decode (<<?ut_server_tag, ?ut_protocol_1_tag,
           ?ut_register_tag, ?ut_response_tag,
@@ -40,6 +48,16 @@ decode (<<?ut_server_tag, ?ut_protocol_2_tag,
           _Padding:16#12/unit:8, ServerName:16#40/bytes>>) ->
 
   #ut_register_response{protocol    = 2,
-                        server_name = unpad (ServerName)}.
+                        server_name = unpad (ServerName)};
+
+decode (<<?ut_server_tag, ?ut_protocol_1_tag,
+          ?ut_unregister_tag, ?ut_response_tag,
+          _Padding:16#12/unit:8>>) ->
+  #ut_unregister_response{protocol = 1};
+
+decode (<<?ut_server_tag, ?ut_protocol_2_tag,
+          ?ut_unregister_tag, ?ut_response_tag,
+          _Padding:16#12/unit:8>>) ->
+  #ut_unregister_response{protocol = 2}.
 
 % vim:set et sw=2 sts=2:

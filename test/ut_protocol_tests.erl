@@ -77,6 +77,29 @@ register_test_ () ->
                   0:16#12/unit:8, (?M:pad (?SERVER_NAME, 16#40))/bytes>>,
                 16#58)].
 
+unregister_test_ () ->
+  [test_encode (#ut_unregister_query{protocol = 1},
+                <<?ut_client_tag, ?ut_protocol_1_tag,
+                  ?ut_unregister_tag, ?ut_query_tag,
+                  0:16#10/unit:8>>,
+                16#16),
+   test_encode (#ut_unregister_query{protocol = 2},
+                <<?ut_client_tag, ?ut_protocol_2_tag,
+                  ?ut_unregister_tag, ?ut_query_tag,
+                  0:16#10/unit:8>>,
+                16#16),
+
+   test_decode (#ut_unregister_response{protocol = 1},
+                <<?ut_server_tag, ?ut_protocol_1_tag,
+                  ?ut_unregister_tag, ?ut_response_tag,
+                  0:16#12/unit:8>>,
+                16#18),
+   test_decode (#ut_unregister_response{protocol = 2},
+                <<?ut_server_tag, ?ut_protocol_2_tag,
+                  ?ut_unregister_tag, ?ut_response_tag,
+                  0:16#12/unit:8>>,
+                16#18)].
+
 test_encode (Rec, Expected, Size) ->
   [{"The size of the encoded packet should be correct",
     ?_assertEqual (Size, byte_size (?M:encode (Rec)))},
