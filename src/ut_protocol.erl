@@ -74,7 +74,13 @@ encode (#ut_shutdown_response{protocol = Protocol,
 
 encode (#ut_shutdown_cancel_response{protocol = Protocol}) ->
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
-    ?ut_shutdown_cancel_tag, ?ut_response_tag, 0:16#10/unit:8>>.
+    ?ut_shutdown_cancel_tag, ?ut_response_tag, 0:16#10/unit:8>>;
+
+% Encode get_time response.
+
+encode (#ut_get_time_response{protocol = Protocol, time = Time}) ->
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_get_time_tag, ?ut_response_tag, Time:32, 0:16#10/unit:8>>.
 
 % Decode register response.
 
@@ -158,7 +164,14 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
 decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           ?ut_shutdown_cancel_tag, ?ut_query_tag, Unknown6:16#16/bytes>>) ->
 
-  #ut_shutdown_cancel_query{protocol = decode_protocol (Protocol)}.
+  #ut_shutdown_cancel_query{protocol = decode_protocol (Protocol)};
+
+% Decode get_time query.
+
+decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
+          ?ut_get_time_tag, ?ut_query_tag, Unknown6:16#10/bytes>>) ->
+
+  #ut_get_time_query{protocol = decode_protocol (Protocol)}.
 
 % Private functions.
 

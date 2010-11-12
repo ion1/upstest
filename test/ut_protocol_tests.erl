@@ -242,6 +242,25 @@ shutdown_cancel_test_ () ->
 
   [DecodeTests, EncodeTests].
 
+get_time_test_ () ->
+  DecodeTests = lists:map (fun (Protocol) ->
+      test_decode (#ut_get_time_query{protocol = Protocol},
+                   <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_get_time_tag, ?ut_query_tag,
+                     -1:16#10/unit:8>>, % Unknown. Padding?
+                   16#16) end,
+    [1, 2]),
+
+  EncodeTests = lists:map (fun (Protocol) ->
+      test_encode (#ut_get_time_response{protocol = Protocol, time = ?TIME},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_get_time_tag, ?ut_response_tag, ?TIME:32,
+                     0:16#10/unit:8>>,
+                   16#1a) end,
+    [1, 2]),
+
+  [DecodeTests, EncodeTests].
+
 test_encode (Rec, Expected, Size) ->
   [{"The size of the encoded packet should be correct",
     ?_assertEqual (Size, byte_size (?M:encode (Rec)))},

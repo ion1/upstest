@@ -42,4 +42,7 @@
 -record (ut_shutdown_cancel_query,    {protocol}).
 -record (ut_shutdown_cancel_response, {protocol}).
 
+-record (ut_get_time_query,    {protocol}).
+-record (ut_get_time_response, {protocol, time}).
+
 % vim:set et sw=2 sts=2:
