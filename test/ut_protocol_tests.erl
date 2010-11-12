@@ -135,6 +135,62 @@ am_i_there_test_ () ->
 
   [EncodeTests, DecodeTests].
 
+discover_test_ () ->
+  EncodeTests = lists:map (fun ({Protocol, EachSegment}) ->
+      EachSegmentByte = case EachSegment of
+        false -> 0;
+        true  -> 1 end,
+
+      test_encode (#ut_discover_query{protocol     = Protocol,
+                                      each_segment = EachSegment},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_discover_tag, ?ut_query_tag,
+                     EachSegmentByte, 0:16#f/unit:8>>,
+                   16#16) end,
+    [{Protocol, EachSegment} || Protocol    <- [1, 2],
+                                EachSegment <- [false, true]]),
+
+  DecodeTests = [
+    test_decode (#ut_discover_response{protocol         = 1,
+                                       server_ipv4_addr = ?IPV4_ADDR,
+                                       server_name      = ?SERVER_NAME,
+                                       have_multip_segs = false,
+                                       segment_id       = 16#ffff,
+                                       segment_name     = <<"All">>},
+                 <<?ut_server_tag, ?ut_protocol_1_tag,
+                   ?ut_discover_tag, ?ut_response_tag,
+                   ?IPV4_ADDR/bytes,
+                   -1:16, % Unknown.
+                   (?M:pad (?SERVER_NAME, 16#40))/bytes,
+                   -1:16#10/unit:8>>, % Unknown. Padding or perhaps a name.
+                 16#5c),
+
+    lists:map (fun ({HaveMultipSegsByte, SegmentID, SegmentName}) ->
+        HaveMultipSegs = case HaveMultipSegsByte of
+          0 -> false;
+          _ -> true end,
+
+        test_decode (#ut_discover_response{protocol         = 2,
+                                           server_ipv4_addr = ?IPV4_ADDR,
+                                           server_name      = ?SERVER_NAME,
+                                           have_multip_segs = HaveMultipSegs,
+                                           segment_id       = SegmentID,
+                                           segment_name     = SegmentName},
+                     <<?ut_server_tag, ?ut_protocol_2_tag,
+                       ?ut_discover_tag, ?ut_response_tag,
+                       ?IPV4_ADDR/bytes,
+                       -1:16, % Unknown
+                       (?M:pad (?SERVER_NAME, 16#40))/bytes,
+                       0:32, HaveMultipSegsByte, 0,
+                       SegmentID:16, (?M:pad (SegmentName, 16#10))/bytes>>,
+                     16#64) end,
+      [{HaveMultipSegsByte, SegmentID, SegmentName}
+       || HaveMultipSegsByte       <- [0, 1, 42],
+          {SegmentID, SegmentName} <- [{?SEGMENT_ID, ?SEGMENT_NAME},
+                                       {16#ffff,     <<"All">>}]])],
+
+  [EncodeTests, DecodeTests].
+
 test_encode (Rec, Expected, Size) ->
   [{"The size of the encoded packet should be correct",
     ?_assertEqual (Size, byte_size (?M:encode (Rec)))},

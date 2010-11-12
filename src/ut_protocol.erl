@@ -45,7 +45,18 @@ encode (#ut_am_i_there_query{protocol = Protocol, ipv4_addr = IPv4Addr}) ->
 
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
     ?ut_am_i_there_tag, ?ut_query_tag,
-    IPv4AddrLittle/bytes, 0:16#10/unit:8>>.
+    IPv4AddrLittle/bytes, 0:16#10/unit:8>>;
+
+% Encode discover query.
+
+encode (#ut_discover_query{protocol = Protocol, each_segment = EachSegment}) ->
+  EachSegmentByte = case EachSegment of
+    false -> 0;
+    true  -> 1 end,
+
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_discover_tag, ?ut_query_tag,
+    EachSegmentByte, 0:16#f/unit:8>>.
 
 % Decode register response.
 
@@ -82,7 +93,37 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
     _ -> true end,
 
   #ut_am_i_there_response{protocol = decode_protocol (Protocol),
-                          status   = Status}.
+                          status   = Status};
+
+% Decode discover response.
+
+decode (<<?ut_server_tag, ?ut_protocol_1_tag,
+          ?ut_discover_tag, ?ut_response_tag,
+          ServerIPv4Addr:32/bits, UnknownA:16, ServerName:16#40/bytes,
+          Unknown4C:16#10/bytes>>) ->
+
+  #ut_discover_response{protocol         = 1,
+                        server_ipv4_addr = ServerIPv4Addr,
+                        server_name      = unpad (ServerName),
+                        have_multip_segs = false,
+                        segment_id       = 16#ffff,
+                        segment_name     = <<"All">>};
+
+decode (<<?ut_server_tag, ?ut_protocol_2_tag,
+          ?ut_discover_tag, ?ut_response_tag,
+          ServerIPv4Addr:32/bits, UnknownA:16, ServerName:16#40/bytes, 0:32,
+          HaveMultipSegsByte, 0, SegmentID:16, SegmentName:16#10/bytes>>) ->
+
+  HaveMultipSegs = case HaveMultipSegsByte of
+    0 -> false;
+    _ -> true end,
+
+  #ut_discover_response{protocol         = 2,
+                        server_ipv4_addr = ServerIPv4Addr,
+                        server_name      = unpad (ServerName),
+                        have_multip_segs = HaveMultipSegs,
+                        segment_id       = SegmentID,
+                        segment_name     = unpad (SegmentName)}.
 
 % Private functions.
 

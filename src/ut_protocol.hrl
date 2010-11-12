@@ -32,4 +32,8 @@
 -record (ut_am_i_there_query,    {protocol, ipv4_addr}).
 -record (ut_am_i_there_response, {protocol, status}).
 
+-record (ut_discover_query,    {protocol, each_segment}).
+-record (ut_discover_response, {protocol, server_ipv4_addr, server_name,
+                                have_multip_segs, segment_id, segment_name}).
+
 % vim:set et sw=2 sts=2:
