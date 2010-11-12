@@ -39,7 +39,8 @@ constants_test_ () ->
 
 pad_test_ () ->
   {"pad should shorten strings if needed and pad with zero bytes if needed",
-   [?_assertEqual (<<"foo">>,                ?M:pad (<<"foobar">>, 3)),
+   [?_assertEqual (<<"">>,                   ?M:pad (<<"foobar">>, 0)),
+    ?_assertEqual (<<"foo">>,                ?M:pad (<<"foobar">>, 3)),
     ?_assertEqual (<<"foobar">>,             ?M:pad (<<"foobar">>, 6)),
     ?_assertEqual (<<"foobar\000\000\000">>, ?M:pad (<<"foobar">>, 9))]}.
 
