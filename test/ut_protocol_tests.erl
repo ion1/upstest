@@ -293,4 +293,14 @@ test_decode (Expected, Packet, Size) ->
    {"The decoded record should match the expected one",
     ?_assertEqual (Expected, ?M:decode (Packet))}].
 
+client_id_test_ () ->
+  Tests = lists:map (fun ({Expected, ClientIPv4Addr,
+                           MonitorPort, RegisterTime}) ->
+      Value = ?M:client_id (ClientIPv4Addr, MonitorPort, RegisterTime),
+      ?_assertEqual (Expected, Value) end,
+    % TODO: Add more test cases.
+    [{<<16#710ff6e2:32>>, << 10,  0,  1, 34>>, 2845, 1286258230}]),
+
+  {"client_id should return correct values", Tests}.
+
 % vim:set et sw=2 sts=2:

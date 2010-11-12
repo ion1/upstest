@@ -178,6 +178,26 @@ encode_protocol (2) -> <<?ut_protocol_2_tag>>.
 decode_protocol (<<?ut_protocol_1_tag>>) -> 1;
 decode_protocol (<<?ut_protocol_2_tag>>) -> 2.
 
+client_id (ClientIPv4Addr, MonitorPort, RegisterTime) ->
+  Hash = erlang:md5 (<<ClientIPv4Addr:32/bits, MonitorPort:16, RegisterTime:32>>),
+
+  Elems = lists:foldl (fun (I, Acc) ->
+      % Take the lowest two bits of the previously inserted byte, or
+      % RegisterTime in the first iteration. Insert the hash byte at the
+      % position (count·4 + the value from above).
+
+      Prev = case Acc of
+        [X|_] -> X;
+        []    -> RegisterTime end,
+
+      HashI = I*4 + (Prev band 3),
+      <<_:HashI/bytes, Val, _/bytes>> = Hash,
+
+      [Val|Acc] end,
+    [], lists:seq (0, 3)),
+
+  list_to_bitstring (lists:reverse (Elems)).
+
 pad (BitString, Length) ->
   Format = "~" ++ integer_to_list (-Length) ++ "..\000s",
   list_to_bitstring (lists:flatten (io_lib:format (Format, [BitString]))).
