@@ -56,7 +56,19 @@ encode (#ut_discover_query{protocol = Protocol, each_segment = EachSegment}) ->
 
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
     ?ut_discover_tag, ?ut_query_tag,
-    EachSegmentByte, 0:16#f/unit:8>>.
+    EachSegmentByte, 0:16#f/unit:8>>;
+
+% Encode shutdown response.
+
+encode (#ut_shutdown_response{protocol = Protocol,
+                              shutdown_delay = ShutdownDelay}) ->
+
+  Unknown6 = 1,
+  UnknownA = 1,
+
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_shutdown_tag, ?ut_response_tag,
+    Unknown6:16, ShutdownDelay:16, UnknownA, 0:16#11/unit:8>>.
 
 % Decode register response.
 
@@ -123,7 +135,17 @@ decode (<<?ut_server_tag, ?ut_protocol_2_tag,
                         server_name      = unpad (ServerName),
                         have_multip_segs = HaveMultipSegs,
                         segment_id       = SegmentID,
-                        segment_name     = unpad (SegmentName)}.
+                        segment_name     = unpad (SegmentName)};
+
+% Decode shutdown query.
+
+decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
+          ?ut_shutdown_tag, ?ut_query_tag,
+          Unknown6:16, Unknown8, 0, ClientID:32/bits, 0:32, Unknown12:16,
+          0:16#10/unit:8>>) ->
+
+  #ut_shutdown_query{protocol  = decode_protocol (Protocol),
+                     client_id = ClientID}.
 
 % Private functions.
 

@@ -11,6 +11,7 @@
 -define (SEGMENT_ID,   42).
 -define (TIME,         16#43210fed).
 -define (IPV4_ADDR,    <<10,20,30,40>>).
+-define (CLIENT_ID,    <<42,41,40,39>>).
 
 constants_test_ () ->
   {"The constants should be correct",
@@ -190,6 +191,37 @@ discover_test_ () ->
                                        {16#ffff,     <<"All">>}]])],
 
   [EncodeTests, DecodeTests].
+
+shutdown_test_ () ->
+  DecodeTests = lists:map (fun (Protocol) ->
+      test_decode (#ut_shutdown_query{protocol  = Protocol,
+                                      client_id = ?CLIENT_ID},
+                   <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_shutdown_tag, ?ut_query_tag,
+                     -1:16, % Unknown
+                     -1, % Unknown
+                     0, ?CLIENT_ID/bytes, 0:32,
+                     -1:16, % Unknown
+                     0:16#10/unit:8>>,
+                   16#24) end,
+    [1, 2]),
+
+  EncodeTests = lists:map (fun (Protocol) ->
+      ShutdownDelay = 180,
+      Unknown6 = 1,
+      UnknownA = 1,
+      test_encode (#ut_shutdown_response{protocol = Protocol,
+                                         shutdown_delay = ShutdownDelay},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_shutdown_tag, ?ut_response_tag,
+                     Unknown6:16, % Unknown
+                     ShutdownDelay:16,
+                     UnknownA, % Unknown
+                     0:16#11/unit:8>>,
+                   16#1c) end,
+    [1, 2]),
+
+  [DecodeTests, EncodeTests].
 
 test_encode (Rec, Expected, Size) ->
   [{"The size of the encoded packet should be correct",

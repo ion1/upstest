@@ -36,4 +36,7 @@
 -record (ut_discover_response, {protocol, server_ipv4_addr, server_name,
                                 have_multip_segs, segment_id, segment_name}).
 
+-record (ut_shutdown_query,    {protocol, client_id}).
+-record (ut_shutdown_response, {protocol, shutdown_delay}).
+
 % vim:set et sw=2 sts=2:
