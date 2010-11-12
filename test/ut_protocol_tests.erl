@@ -104,7 +104,7 @@ unregister_test_ () ->
 
   [EncodeTests, DecodeTests].
 
-amithere_test_ () ->
+am_i_there_test_ () ->
   IPv4AddrLittle = fun (<<N:32>>) -> <<N:32/little>> end (?IPV4_ADDR),
 
   EncodeTests = lists:map (fun (Protocol) ->
