@@ -1,21 +1,11 @@
 -module (ut_protocol).
 -include ("ut_protocol.hrl").
 
--export ([pad/2, unpad/1, encode/1, decode/1]).
+-export ([encode/1, decode/1]).
 
 -ifdef (TEST).
 -compile (export_all).
 -endif.
-
-pad (BitString, Length) ->
-  Format = "~" ++ integer_to_list (-Length) ++ "..\000s",
-  list_to_bitstring (lists:flatten (io_lib:format (Format, [BitString]))).
-
-unpad (BitString) -> unpad (BitString, <<>>).
-
-unpad (<<>>, Result) -> Result;
-unpad (<<0, _Rest/bytes>>, Result) -> Result;
-unpad (<<B, Rest/bytes>>, Result) -> unpad (Rest, <<Result/bytes, B>>).
 
 % Encode register query.
 
@@ -187,5 +177,15 @@ encode_protocol (2) -> <<?ut_protocol_2_tag>>.
 
 decode_protocol (<<?ut_protocol_1_tag>>) -> 1;
 decode_protocol (<<?ut_protocol_2_tag>>) -> 2.
+
+pad (BitString, Length) ->
+  Format = "~" ++ integer_to_list (-Length) ++ "..\000s",
+  list_to_bitstring (lists:flatten (io_lib:format (Format, [BitString]))).
+
+unpad (BitString) -> unpad (BitString, <<>>).
+
+unpad (<<>>, Result) -> Result;
+unpad (<<0, _Rest/bytes>>, Result) -> Result;
+unpad (<<B, Rest/bytes>>, Result) -> unpad (Rest, <<Result/bytes, B>>).
 
 % vim:set et sw=2 sts=2:
