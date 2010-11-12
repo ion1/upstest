@@ -8,7 +8,7 @@
 
 -define (SERVER_NAME,  <<"Uninterruptible Poo Supply">>).
 -define (SEGMENT_NAME, <<"42nd floor">>).
--define (SEGMENT,      42).
+-define (SEGMENT_ID,   42).
 -define (TIME,         16#43210fed).
 -define (IPV4_ADDR,    <<10,20,30,40>>).
 
@@ -61,11 +61,12 @@ encode_decode_protocol_test_ () ->
 register_test_ () ->
   EncodeTests = lists:map (fun ({Protocol, PaddingLength, PacketLength}) ->
       test_encode (#ut_register_query{protocol   = Protocol,
-                                      segment_id = ?SEGMENT,
+                                      segment_id = ?SEGMENT_ID,
                                       time       = ?TIME},
                    <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_register_tag, ?ut_query_tag,
-                     ?TIME:32, ?SEGMENT:16, ?TIME:32, 0:PaddingLength/unit:8>>,
+                     ?TIME:32, ?SEGMENT_ID:16, ?TIME:32,
+                     0:PaddingLength/unit:8>>,
                    PacketLength) end,
     [{1, 16#10, 16#20}, {2, 16#30, 16#40}]),
 
