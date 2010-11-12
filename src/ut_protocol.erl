@@ -21,19 +21,17 @@ encode (#ut_register_query{protocol   = Protocol,
                            segment_id = SegmentId,
                            time       = Time}) ->
 
-  {ProtocolTag, Padding} = case Protocol of
-    1 -> {<<?ut_protocol_1_tag>>, <<0:16#10/unit:8>>};
-    2 -> {<<?ut_protocol_2_tag>>, <<0:16#30/unit:8>>} end,
+  PaddingLength = case Protocol of
+    1 -> 16#10;
+    2 -> 16#30 end,
 
-  <<?ut_client_tag, ProtocolTag/bytes, ?ut_register_tag, ?ut_query_tag,
-    Time:32, SegmentId:16, Time:32, Padding/bytes>>;
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_register_tag, ?ut_query_tag,
+    Time:32, SegmentId:16, Time:32, 0:PaddingLength/unit:8>>;
 
 encode (#ut_unregister_query{protocol = Protocol}) ->
-  ProtocolTag = case Protocol of
-    1 -> <<?ut_protocol_1_tag>>;
-    2 -> <<?ut_protocol_2_tag>> end,
-
-  <<?ut_client_tag, ProtocolTag/bytes, ?ut_unregister_tag, ?ut_query_tag,
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_unregister_tag, ?ut_query_tag,
     0:16#10/unit:8>>.
 
 decode (<<?ut_server_tag, ?ut_protocol_1_tag,
@@ -50,14 +48,18 @@ decode (<<?ut_server_tag, ?ut_protocol_2_tag,
   #ut_register_response{protocol    = 2,
                         server_name = unpad (ServerName)};
 
-decode (<<?ut_server_tag, ?ut_protocol_1_tag,
+decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           ?ut_unregister_tag, ?ut_response_tag,
           _Padding:16#12/unit:8>>) ->
-  #ut_unregister_response{protocol = 1};
 
-decode (<<?ut_server_tag, ?ut_protocol_2_tag,
-          ?ut_unregister_tag, ?ut_response_tag,
-          _Padding:16#12/unit:8>>) ->
-  #ut_unregister_response{protocol = 2}.
+  #ut_unregister_response{protocol = decode_protocol (Protocol)}.
+
+% Private functions.
+
+encode_protocol (1) -> <<?ut_protocol_1_tag>>;
+encode_protocol (2) -> <<?ut_protocol_2_tag>>.
+
+decode_protocol (<<?ut_protocol_1_tag>>) -> 1;
+decode_protocol (<<?ut_protocol_2_tag>>) -> 2.
 
 % vim:set et sw=2 sts=2:

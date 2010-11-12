@@ -7,6 +7,7 @@
 
 -define (ut_protocol_1_tag,      2, 16#10).
 -define (ut_protocol_2_tag,      2, 16#20).
+-define (ut_protocol_length,     2).
 
 -define (ut_query_tag,           0).
 -define (ut_response_tag,        1).

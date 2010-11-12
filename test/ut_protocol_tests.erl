@@ -22,6 +22,7 @@ constants_test_ () ->
 
     ?_assertEqual (<<2, 16#10>>, <<?ut_protocol_1_tag>>),
     ?_assertEqual (<<2, 16#20>>, <<?ut_protocol_2_tag>>),
+    ?_assertEqual (2,            ?ut_protocol_length),
 
     ?_assertEqual (<<0>>,        <<?ut_query_tag>>),
     ?_assertEqual (<<1>>,        <<?ut_response_tag>>),
@@ -47,6 +48,13 @@ unpad_test_ () ->
     ?_assertEqual (<<"foobar">>, ?M:unpad (<<"foobar\000\000\000">>)),
     ?_assertEqual (<<"foobar">>, ?M:unpad (<<"foobar\000baz">>)),
     ?_assertEqual (<<"">>,       ?M:unpad (<<"\000baz">>))]}.
+
+encode_decode_protocol_test_ () ->
+  {"encode_protocol, decode_protocol should return correct values",
+   [?_assertEqual (<<?ut_protocol_1_tag>>, ?M:encode_protocol (1)),
+    ?_assertEqual (<<?ut_protocol_2_tag>>, ?M:encode_protocol (2)),
+    ?_assertEqual (1, ?M:decode_protocol (<<?ut_protocol_1_tag>>)),
+    ?_assertEqual (2, ?M:decode_protocol (<<?ut_protocol_2_tag>>))]}.
 
 register_test_ () ->
   [test_encode (#ut_register_query{protocol   = 1,
