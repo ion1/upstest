@@ -42,14 +42,14 @@ encode (#ut_unregister_query{protocol = Protocol}) ->
 
 decode (<<?ut_server_tag, ?ut_protocol_1_tag,
           ?ut_register_tag, ?ut_response_tag,
-          _Padding:16#12/unit:8>>) ->
+          0:16#12/unit:8>>) ->
 
   #ut_register_response{protocol    = 1,
                         server_name = nil};
 
 decode (<<?ut_server_tag, ?ut_protocol_2_tag,
           ?ut_register_tag, ?ut_response_tag,
-          _Padding:16#12/unit:8, ServerName:16#40/bytes>>) ->
+          0:16#12/unit:8, ServerName:16#40/bytes>>) ->
 
   #ut_register_response{protocol    = 2,
                         server_name = unpad (ServerName)};
@@ -58,7 +58,7 @@ decode (<<?ut_server_tag, ?ut_protocol_2_tag,
 
 decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           ?ut_unregister_tag, ?ut_response_tag,
-          _Padding:16#12/unit:8>>) ->
+          0:16#12/unit:8>>) ->
 
   #ut_unregister_response{protocol = decode_protocol (Protocol)}.
 
