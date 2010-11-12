@@ -10,6 +10,7 @@
 -define (SEGMENT_NAME, <<"42nd floor">>).
 -define (SEGMENT,      42).
 -define (TIME,         16#43210fed).
+-define (IPV4_ADDR,    <<10,20,30,40>>).
 
 constants_test_ () ->
   {"The constants should be correct",
@@ -106,6 +107,47 @@ unregister_test_ () ->
                 <<?ut_server_tag, ?ut_protocol_2_tag,
                   ?ut_unregister_tag, ?ut_response_tag,
                   0:16#12/unit:8>>,
+                16#18)].
+
+amithere_test_ () ->
+  IPv4AddrLittle = fun (<<N:32>>) -> <<N:32/little>> end (?IPV4_ADDR),
+
+  [test_encode (#ut_am_i_there_query{protocol = 1, ipv4_addr = ?IPV4_ADDR},
+                <<?ut_client_tag, ?ut_protocol_1_tag,
+                  ?ut_am_i_there_tag, ?ut_query_tag,
+                  IPv4AddrLittle/bytes,
+                  0:16#10/unit:8>>,
+                16#1a),
+   test_encode (#ut_am_i_there_query{protocol = 2, ipv4_addr = ?IPV4_ADDR},
+                <<?ut_client_tag, ?ut_protocol_2_tag,
+                  ?ut_am_i_there_tag, ?ut_query_tag,
+                  IPv4AddrLittle/bytes,
+                  0:16#10/unit:8>>,
+                16#1a),
+
+   test_decode (#ut_am_i_there_response{protocol = 1, status = false},
+                <<?ut_server_tag, ?ut_protocol_1_tag,
+                  ?ut_am_i_there_tag, ?ut_response_tag,
+                  0,
+                  0:16#11/unit:8>>,
+                16#18),
+   test_decode (#ut_am_i_there_response{protocol = 1, status = true},
+                <<?ut_server_tag, ?ut_protocol_1_tag,
+                  ?ut_am_i_there_tag, ?ut_response_tag,
+                  1,
+                  0:16#11/unit:8>>,
+                16#18),
+   test_decode (#ut_am_i_there_response{protocol = 2, status = false},
+                <<?ut_server_tag, ?ut_protocol_2_tag,
+                  ?ut_am_i_there_tag, ?ut_response_tag,
+                  0,
+                  0:16#11/unit:8>>,
+                16#18),
+   test_decode (#ut_am_i_there_response{protocol = 2, status = true},
+                <<?ut_server_tag, ?ut_protocol_2_tag,
+                  ?ut_am_i_there_tag, ?ut_response_tag,
+                  1,
+                  0:16#11/unit:8>>,
                 16#18)].
 
 test_encode (Rec, Expected, Size) ->

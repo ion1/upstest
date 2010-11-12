@@ -29,4 +29,7 @@
 -record (ut_unregister_query,    {protocol}).
 -record (ut_unregister_response, {protocol}).
 
+-record (ut_am_i_there_query,    {protocol, ipv4_addr}).
+-record (ut_am_i_there_response, {protocol, status}).
+
 % vim:set et sw=2 sts=2:

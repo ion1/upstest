@@ -36,7 +36,16 @@ encode (#ut_register_query{protocol   = Protocol,
 encode (#ut_unregister_query{protocol = Protocol}) ->
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
     ?ut_unregister_tag, ?ut_query_tag,
-    0:16#10/unit:8>>.
+    0:16#10/unit:8>>;
+
+% Encode am_i_there query.
+
+encode (#ut_am_i_there_query{protocol = Protocol, ipv4_addr = IPv4Addr}) ->
+  IPv4AddrLittle = fun (<<N:32>>) -> <<N:32/little>> end (IPv4Addr),
+
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_am_i_there_tag, ?ut_query_tag,
+    IPv4AddrLittle/bytes, 0:16#10/unit:8>>.
 
 % Decode register response.
 
@@ -60,7 +69,20 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           ?ut_unregister_tag, ?ut_response_tag,
           0:16#12/unit:8>>) ->
 
-  #ut_unregister_response{protocol = decode_protocol (Protocol)}.
+  #ut_unregister_response{protocol = decode_protocol (Protocol)};
+
+% Decode am_i_there response.
+
+decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
+          ?ut_am_i_there_tag, ?ut_response_tag,
+          StatusByte, 0:16#11/unit:8>>) ->
+
+  Status = case StatusByte of
+    0 -> false;
+    _ -> true end,
+
+  #ut_am_i_there_response{protocol = decode_protocol (Protocol),
+                          status   = Status}.
 
 % Private functions.
 
