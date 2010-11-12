@@ -39,4 +39,7 @@
 -record (ut_shutdown_query,    {protocol, client_id}).
 -record (ut_shutdown_response, {protocol, shutdown_delay}).
 
+-record (ut_shutdown_cancel_query,    {protocol}).
+-record (ut_shutdown_cancel_response, {protocol}).
+
 % vim:set et sw=2 sts=2:

@@ -68,7 +68,13 @@ encode (#ut_shutdown_response{protocol = Protocol,
 
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
     ?ut_shutdown_tag, ?ut_response_tag,
-    Unknown6:16, ShutdownDelay:16, UnknownA, 0:16#11/unit:8>>.
+    Unknown6:16, ShutdownDelay:16, UnknownA, 0:16#11/unit:8>>;
+
+% Encode shutdown_cancel response.
+
+encode (#ut_shutdown_cancel_response{protocol = Protocol}) ->
+  <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
+    ?ut_shutdown_cancel_tag, ?ut_response_tag, 0:16#10/unit:8>>.
 
 % Decode register response.
 
@@ -145,7 +151,14 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           0:16#10/unit:8>>) ->
 
   #ut_shutdown_query{protocol  = decode_protocol (Protocol),
-                     client_id = ClientID}.
+                     client_id = ClientID};
+
+% Decode shutdown_cancel query.
+
+decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
+          ?ut_shutdown_cancel_tag, ?ut_query_tag, Unknown6:16#16/bytes>>) ->
+
+  #ut_shutdown_cancel_query{protocol = decode_protocol (Protocol)}.
 
 % Private functions.
 

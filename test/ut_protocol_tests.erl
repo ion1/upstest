@@ -223,6 +223,25 @@ shutdown_test_ () ->
 
   [DecodeTests, EncodeTests].
 
+shutdown_cancel_test_ () ->
+  DecodeTests = lists:map (fun (Protocol) ->
+      test_decode (#ut_shutdown_cancel_query{protocol = Protocol},
+                   <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_shutdown_cancel_tag, ?ut_query_tag,
+                     -1:16#16/unit:8>>, % Unknown. Padding?
+                   16#1c) end,
+    [1, 2]),
+
+  EncodeTests = lists:map (fun (Protocol) ->
+      test_encode (#ut_shutdown_cancel_response{protocol = Protocol},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_shutdown_cancel_tag, ?ut_response_tag,
+                     0:16#10/unit:8>>,
+                   16#16) end,
+    [1, 2]),
+
+  [DecodeTests, EncodeTests].
+
 test_encode (Rec, Expected, Size) ->
   [{"The size of the encoded packet should be correct",
     ?_assertEqual (Size, byte_size (?M:encode (Rec)))},
