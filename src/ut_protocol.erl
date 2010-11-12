@@ -17,6 +17,8 @@ unpad (<<>>, Result) -> Result;
 unpad (<<0, _Rest/bytes>>, Result) -> Result;
 unpad (<<B, Rest/bytes>>, Result) -> unpad (Rest, <<Result/bytes, B>>).
 
+% Encode register query.
+
 encode (#ut_register_query{protocol   = Protocol,
                            segment_id = SegmentId,
                            time       = Time}) ->
@@ -29,10 +31,14 @@ encode (#ut_register_query{protocol   = Protocol,
     ?ut_register_tag, ?ut_query_tag,
     Time:32, SegmentId:16, Time:32, 0:PaddingLength/unit:8>>;
 
+% Encode unregister query.
+
 encode (#ut_unregister_query{protocol = Protocol}) ->
   <<?ut_client_tag, (encode_protocol (Protocol))/bytes,
     ?ut_unregister_tag, ?ut_query_tag,
     0:16#10/unit:8>>.
+
+% Decode register response.
 
 decode (<<?ut_server_tag, ?ut_protocol_1_tag,
           ?ut_register_tag, ?ut_response_tag,
@@ -47,6 +53,8 @@ decode (<<?ut_server_tag, ?ut_protocol_2_tag,
 
   #ut_register_response{protocol    = 2,
                         server_name = unpad (ServerName)};
+
+% Decode unregister response.
 
 decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
           ?ut_unregister_tag, ?ut_response_tag,
