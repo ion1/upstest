@@ -184,8 +184,8 @@ pad (BitString, Length) ->
 
 unpad (BitString) -> unpad (BitString, <<>>).
 
-unpad (<<>>, Result) -> Result;
+unpad (<<>>,               Result) -> Result;
 unpad (<<0, _Rest/bytes>>, Result) -> Result;
-unpad (<<B, Rest/bytes>>, Result) -> unpad (Rest, <<Result/bytes, B>>).
+unpad (<<B, Rest/bytes>>,  Result) -> unpad (Rest, <<Result/bytes, B>>).
 
 % vim:set et sw=2 sts=2:
