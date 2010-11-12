@@ -20,6 +20,7 @@ unpad (<<B, Rest/bytes>>, Result) -> unpad (Rest, <<Result/bytes, B>>).
 encode (#ut_register_query{protocol   = Protocol,
                            segment_id = SegmentId,
                            time       = Time}) ->
+
   {ProtocolTag, Padding} = case Protocol of
     1 -> {<<?ut_protocol_1_tag>>, <<0:16#10/unit:8>>};
     2 -> {<<?ut_protocol_2_tag>>, <<0:16#30/unit:8>>} end,
@@ -30,12 +31,14 @@ encode (#ut_register_query{protocol   = Protocol,
 decode (<<?ut_server_tag, ?ut_protocol_1_tag,
           ?ut_register_tag, ?ut_response_tag,
           _Padding:16#12/unit:8>>) ->
+
   #ut_register_response{protocol    = 1,
                         server_name = nil};
 
 decode (<<?ut_server_tag, ?ut_protocol_2_tag,
           ?ut_register_tag, ?ut_response_tag,
           _Padding:16#12/unit:8, ServerName:16#40/bytes>>) ->
+
   #ut_register_response{protocol    = 2,
                         server_name = unpad (ServerName)}.
 
