@@ -13,6 +13,8 @@
 -define (IPV4_ADDR,    <<10,20,30,40>>).
 -define (CLIENT_ID,    <<42,41,40,39>>).
 
+-define (R (Bits), (random:uniform (1 bsl Bits) - 1)).
+
 constants_test_ () ->
   {"The constants should be correct",
    [?_assertEqual (200,          ?ut_server_port),
@@ -151,8 +153,8 @@ discover_test_ () ->
     [{Protocol, EachSegment} || Protocol    <- [1, 2],
                                 EachSegment <- [false, true]]),
 
-  UnknownA  = 42,
-  Unknown4C = 43,
+  UnknownA  = ?R (16),
+  Unknown4C = ?R (16#10 * 8),
 
   DecodeTests = [
     test_decode (#ut_discover_response{protocol         = 1,
@@ -200,9 +202,9 @@ discover_test_ () ->
 
 shutdown_test_ () ->
   DecodeTests = lists:map (fun (Protocol) ->
-      Unknown6  = 42,
-      Unknown8  = 43,
-      Unknown12 = 44,
+      Unknown6  = ?R (16),
+      Unknown8  = ?R (8),
+      Unknown12 = ?R (16),
       test_decode (#ut_shutdown_query{protocol   = Protocol,
                                       client_id  = ?CLIENT_ID,
                                       unknown_6  = Unknown6,
@@ -220,8 +222,8 @@ shutdown_test_ () ->
 
   EncodeTests = lists:map (fun (Protocol) ->
       ShutdownDelay = 180,
-      Unknown6 = 42,
-      UnknownA = 43,
+      Unknown6 = ?R (16),
+      UnknownA = ?R (8),
       test_encode (#ut_shutdown_response{protocol       = Protocol,
                                          shutdown_delay = ShutdownDelay,
                                          unknown_6      = Unknown6,
@@ -239,7 +241,7 @@ shutdown_test_ () ->
 
 shutdown_cancel_test_ () ->
   DecodeTests = lists:map (fun (Protocol) ->
-      Unknown6 = 42,
+      Unknown6 = ?R (16#16 * 8),
       test_decode (#ut_shutdown_cancel_query{protocol  = Protocol,
                                              unknown_6 = Unknown6},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
@@ -260,7 +262,7 @@ shutdown_cancel_test_ () ->
 
 get_time_test_ () ->
   DecodeTests = lists:map (fun (Protocol) ->
-      Unknown6 = 42,
+      Unknown6 = ?R (16#10 * 8),
       test_decode (#ut_get_time_query{protocol  = Protocol,
                                       unknown_6 = Unknown6},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
