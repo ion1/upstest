@@ -170,6 +170,16 @@ decode (<<?ut_server_tag, Protocol:?ut_protocol_length/bytes,
   #ut_get_time_query{protocol  = decode_protocol (Protocol),
                      unknown_6 = Unknown6}.
 
+% Return epoch seconds shifted by DST.
+encode_now (Now) ->
+  LocalTime = calendar:now_to_local_time (Now),
+  Shift = case is_localtime_dst (LocalTime) of
+    false -> 0;
+    true  -> 60*60 end,
+
+  {MegaS, S, _MicroS} = Now,
+  1000000*MegaS + S + Shift.
+
 % Private functions.
 
 encode_protocol (1) -> <<?ut_protocol_1_tag>>;

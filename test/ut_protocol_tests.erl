@@ -303,6 +303,37 @@ client_id_test_ () ->
 
   {"client_id should return correct values", Tests}.
 
+encode_now_test_ () ->
+  [UTCTimeMaybeDST, UTCTimeNotDST] = lists:map (fun (LocalTime) ->
+      erlang:localtime_to_universaltime (LocalTime, undefined) end,
+    [{{2010,7,15},{0,0,0}},
+     {{2010,1,15},{0,0,0}}]),
+
+  UTCTimeToNow = fun (UTCTime) ->
+    EpochTime = calendar:now_to_universal_time ({0,0,0}),
+
+    GregS      = calendar:datetime_to_gregorian_seconds (UTCTime),
+    GregSEpoch = calendar:datetime_to_gregorian_seconds (EpochTime),
+
+    S = GregS - GregSEpoch,
+
+    {S div 1000000, S rem 1000000, 0} end,
+
+  Tests = lists:map (fun (UTCTime) ->
+      LocalTime = calendar:universal_time_to_local_time (UTCTime),
+
+      Now = UTCTimeToNow (UTCTime),
+      {MegaS, S, _MicroS} = Now,
+
+      Shift = case ?M:is_localtime_dst (LocalTime) of
+        false -> 0;
+        true  -> 60*60 end,
+
+      ?_assertEqual (1000000*MegaS + S + Shift, ?M:encode_now (Now)) end,
+    [UTCTimeMaybeDST, UTCTimeNotDST, calendar:universal_time ()]),
+
+  {"encode_now should return epoch seconds shifted by DST", Tests}.
+
 is_localtime_dst_test_ () ->
   UTCDiff = fun (LocalTime) ->
     UTCTime = erlang:localtime_to_universaltime (LocalTime, undefined),
