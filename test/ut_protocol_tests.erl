@@ -303,4 +303,31 @@ client_id_test_ () ->
 
   {"client_id should return correct values", Tests}.
 
+is_localtime_dst_test_ () ->
+  UTCDiff = fun (LocalTime) ->
+    UTCTime = erlang:localtime_to_universaltime (LocalTime, undefined),
+
+    calendar:datetime_to_gregorian_seconds (LocalTime) -
+      calendar:datetime_to_gregorian_seconds (UTCTime) end,
+
+  LocalTimeMaybeDST = {{2010,7,15},{0,0,0}},
+  LocalTimeNotDST   = {{2010,1,15},{0,0,0}},
+
+  UTCDiffMaybeDST = UTCDiff (LocalTimeMaybeDST),
+  UTCDiffNotDST   = UTCDiff (LocalTimeNotDST),
+
+  HaveDST = UTCDiffMaybeDST =/= UTCDiffNotDST,
+
+  case HaveDST of
+    false ->
+      Msg = "The system timezone doesn't have DST in 2010-07-15."
+            " Can't test ~p:is_localtime_dst properly.",
+      ?debugFmt (Msg, [?M]);
+    _ ->
+      ok end,
+
+  {"is_localtime_dst should return true if the date's in DST, false otherwise",
+   [?_assertEqual (HaveDST, ?M:is_localtime_dst (LocalTimeMaybeDST)),
+    ?_assertEqual (false,   ?M:is_localtime_dst (LocalTimeNotDST))]}.
+
 % vim:set et sw=2 sts=2:

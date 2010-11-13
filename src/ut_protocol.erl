@@ -206,4 +206,18 @@ unpad (<<>>,               Result) -> Result;
 unpad (<<0, _Rest/bytes>>, Result) -> Result;
 unpad (<<B, Rest/bytes>>,  Result) -> unpad (Rest, <<Result/bytes, B>>).
 
+is_localtime_dst (LocalTime) ->
+  LocalTimeIfDST = fun (T, DST) ->
+    UT = erlang:localtime_to_universaltime (T, DST),
+    erlang:universaltime_to_localtime (UT) end,
+
+  LocalTimeNotDST = LocalTimeIfDST (LocalTime, false),
+  LocalTimeDST    = LocalTimeIfDST (LocalTime, true),
+
+  % The order is important. If DST doesn’t exist in the timezone, false must be
+  % returned.
+  case LocalTime of
+    LocalTimeNotDST -> false;
+    LocalTimeDST    -> true end.
+
 % vim:set et sw=2 sts=2:
