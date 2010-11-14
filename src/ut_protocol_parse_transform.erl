@@ -114,7 +114,7 @@ substitute_bin_elements (Line, N, Fill) ->
       {error, {Line, erl_parse, ["$+N refers to a non-bin element"]}} end.
 
 build_clause (Mode, Line, Rec, Bin, Transforms) ->
-  Exprs = lists:map (fun ({{atom,_,Name}, Enc, Dec}) ->
+  Exprs = lists:map (fun ({{var,_,Name}, Enc, Dec}) ->
       NameT = list_to_atom (atom_to_list (Name) ++ "T"),
 
       {F, In, Out} = case Mode of
