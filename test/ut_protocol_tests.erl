@@ -62,8 +62,8 @@ encode_decode_protocol_test_ () ->
     ?_assertEqual (2, ?M:decode_protocol (<<?ut_protocol_2_tag>>))]}.
 
 register_test_ () ->
-  EncodeTests = lists:map (fun ({Protocol, PaddingLength, PacketLength}) ->
-      test_encode (#ut_register_query{protocol   = Protocol,
+  QueryTests = lists:map (fun ({Protocol, PaddingLength, PacketLength}) ->
+      test_coders (#ut_register_query{protocol   = Protocol,
                                       segment_id = ?SEGMENT_ID,
                                       time       = ?TIME},
                    <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
@@ -73,12 +73,12 @@ register_test_ () ->
                    PacketLength) end,
     [{1, 16#10, 16#20}, {2, 16#30, 16#40}]),
 
-  DecodeTests = lists:map (fun ({Protocol, ServerNameLength, PacketLength}) ->
+  RespTests = lists:map (fun ({Protocol, ServerNameLength, PacketLength}) ->
       ExpectedServerName = case ServerNameLength of
         0 -> nil;
         _ -> ?SERVER_NAME end,
 
-      test_decode (#ut_register_response{protocol    = Protocol,
+      test_coders (#ut_register_response{protocol    = Protocol,
                                          server_name = ExpectedServerName},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_register_tag, ?ut_response_tag,
@@ -87,32 +87,32 @@ register_test_ () ->
                    PacketLength) end,
     [{1, 0, 16#18}, {2, 16#40, 16#58}]),
 
-  [EncodeTests, DecodeTests].
+  [QueryTests, RespTests].
 
 unregister_test_ () ->
-  EncodeTests = lists:map (fun (Protocol) ->
-      test_encode (#ut_unregister_query{protocol = Protocol},
+  QueryTests = lists:map (fun (Protocol) ->
+      test_coders (#ut_unregister_query{protocol = Protocol},
                    <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_unregister_tag, ?ut_query_tag,
                      0:16#10/unit:8>>,
                    16#16) end,
     [1, 2]),
 
-  DecodeTests = lists:map (fun (Protocol) ->
-      test_decode (#ut_unregister_response{protocol = Protocol},
+  RespTests = lists:map (fun (Protocol) ->
+      test_coders (#ut_unregister_response{protocol = Protocol},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_unregister_tag, ?ut_response_tag,
                      0:16#12/unit:8>>,
                    16#18) end,
     [1, 2]),
 
-  [EncodeTests, DecodeTests].
+  [QueryTests, RespTests].
 
 am_i_there_test_ () ->
   IPv4AddrLittle = fun (<<N:32>>) -> <<N:32/little>> end (?IPV4_ADDR),
 
-  EncodeTests = lists:map (fun (Protocol) ->
-      test_encode (#ut_am_i_there_query{protocol = Protocol,
+  QueryTests = lists:map (fun (Protocol) ->
+      test_coders (#ut_am_i_there_query{protocol = Protocol,
                                         ipv4_addr = ?IPV4_ADDR},
                    <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_am_i_there_tag, ?ut_query_tag,
@@ -121,30 +121,30 @@ am_i_there_test_ () ->
                    16#1a) end,
     [1, 2]),
 
-  DecodeTests = lists:map (fun ({Protocol, StatusByte}) ->
-      Status = case StatusByte of
-        0 -> false;
-        _ -> true end,
+  RespTests = lists:map (fun ({Protocol, Status}) ->
+      StatusByte = case Status of
+        false -> 0;
+        true  -> 1 end,
 
-      test_decode (#ut_am_i_there_response{protocol = Protocol,
+      test_coders (#ut_am_i_there_response{protocol = Protocol,
                                            status   = Status},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_am_i_there_tag, ?ut_response_tag,
                      StatusByte,
                      0:16#11/unit:8>>,
                    16#18) end,
-    [{Protocol, StatusByte} || Protocol   <- [1, 2],
-                               StatusByte <- [0, 1, 42]]),
+    [{Protocol, Status} || Protocol <- [1, 2],
+                           Status   <- [false, true]]),
 
-  [EncodeTests, DecodeTests].
+  [QueryTests, RespTests].
 
 discover_test_ () ->
-  EncodeTests = lists:map (fun ({Protocol, EachSegment}) ->
+  QueryTests = lists:map (fun ({Protocol, EachSegment}) ->
       EachSegmentByte = case EachSegment of
         false -> 0;
         true  -> 1 end,
 
-      test_encode (#ut_discover_query{protocol     = Protocol,
+      test_coders (#ut_discover_query{protocol     = Protocol,
                                       each_segment = EachSegment},
                    <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_discover_tag, ?ut_query_tag,
@@ -156,8 +156,8 @@ discover_test_ () ->
   UnknownA  = ?R (16),
   Unknown4C = ?R (16#10 * 8),
 
-  DecodeTests = [
-    test_decode (#ut_discover_response{protocol         = 1,
+  RespTests = [
+    test_coders (#ut_discover_response{protocol         = 1,
                                        server_ipv4_addr = ?IPV4_ADDR,
                                        server_name      = ?SERVER_NAME,
                                        have_multip_segs = false,
@@ -173,12 +173,12 @@ discover_test_ () ->
                    Unknown4C:16#10/unit:8>>, % Unknown. Padding or perhaps a name.
                  16#5c),
 
-    lists:map (fun ({HaveMultipSegsByte, SegmentID, SegmentName}) ->
-        HaveMultipSegs = case HaveMultipSegsByte of
-          0 -> false;
-          _ -> true end,
+    lists:map (fun ({HaveMultipSegs, SegmentID, SegmentName}) ->
+        HaveMultipSegsByte = case HaveMultipSegs of
+          false -> 0;
+          true  -> 1 end,
 
-        test_decode (#ut_discover_response{protocol         = 2,
+        test_coders (#ut_discover_response{protocol         = 2,
                                            server_ipv4_addr = ?IPV4_ADDR,
                                            server_name      = ?SERVER_NAME,
                                            have_multip_segs = HaveMultipSegs,
@@ -193,19 +193,36 @@ discover_test_ () ->
                        0:32, HaveMultipSegsByte, 0,
                        SegmentID:16, (?M:pad (SegmentName, 16#10))/bytes>>,
                      16#64) end,
-      [{HaveMultipSegsByte, SegmentID, SegmentName}
-       || HaveMultipSegsByte       <- [0, 1, 42],
+      [{HaveMultipSegs, SegmentID, SegmentName}
+       || HaveMultipSegs           <- [false, true],
           {SegmentID, SegmentName} <- [{?SEGMENT_ID, ?SEGMENT_NAME},
                                        {16#ffff,     <<"All">>}]])],
 
-  [EncodeTests, DecodeTests].
+  [QueryTests, RespTests].
 
 shutdown_test_ () ->
-  DecodeTests = lists:map (fun (Protocol) ->
+  QueryTests = lists:map (fun (Protocol) ->
+      ShutdownDelay = 180,
+      Unknown6 = ?R (16),
+      UnknownA = ?R (8),
+      test_coders (#ut_shutdown_response{protocol       = Protocol,
+                                         shutdown_delay = ShutdownDelay,
+                                         unknown_6      = Unknown6,
+                                         unknown_a      = UnknownA},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_shutdown_tag, ?ut_response_tag,
+                     Unknown6:16, % Unknown
+                     ShutdownDelay:16,
+                     UnknownA, % Unknown
+                     0:16#11/unit:8>>,
+                   16#1c) end,
+    [1, 2]),
+
+  RespTests = lists:map (fun (Protocol) ->
       Unknown6  = ?R (16),
       Unknown8  = ?R (8),
       Unknown12 = ?R (16),
-      test_decode (#ut_shutdown_query{protocol   = Protocol,
+      test_coders (#ut_shutdown_query{protocol   = Protocol,
                                       client_id  = ?CLIENT_ID,
                                       unknown_6  = Unknown6,
                                       unknown_8  = Unknown8,
@@ -220,29 +237,20 @@ shutdown_test_ () ->
                    16#24) end,
     [1, 2]),
 
-  EncodeTests = lists:map (fun (Protocol) ->
-      ShutdownDelay = 180,
-      Unknown6 = ?R (16),
-      UnknownA = ?R (8),
-      test_encode (#ut_shutdown_response{protocol       = Protocol,
-                                         shutdown_delay = ShutdownDelay,
-                                         unknown_6      = Unknown6,
-                                         unknown_a      = UnknownA},
-                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
-                     ?ut_shutdown_tag, ?ut_response_tag,
-                     Unknown6:16, % Unknown
-                     ShutdownDelay:16,
-                     UnknownA, % Unknown
-                     0:16#11/unit:8>>,
-                   16#1c) end,
-    [1, 2]),
-
-  [DecodeTests, EncodeTests].
+  [RespTests, QueryTests].
 
 shutdown_cancel_test_ () ->
-  DecodeTests = lists:map (fun (Protocol) ->
+  QueryTests = lists:map (fun (Protocol) ->
+      test_coders (#ut_shutdown_cancel_response{protocol = Protocol},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_shutdown_cancel_tag, ?ut_response_tag,
+                     0:16#10/unit:8>>,
+                   16#16) end,
+    [1, 2]),
+
+  RespTests = lists:map (fun (Protocol) ->
       Unknown6 = ?R (16#16 * 8),
-      test_decode (#ut_shutdown_cancel_query{protocol  = Protocol,
+      test_coders (#ut_shutdown_cancel_query{protocol  = Protocol,
                                              unknown_6 = Unknown6},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_shutdown_cancel_tag, ?ut_query_tag,
@@ -250,20 +258,20 @@ shutdown_cancel_test_ () ->
                    16#1c) end,
     [1, 2]),
 
-  EncodeTests = lists:map (fun (Protocol) ->
-      test_encode (#ut_shutdown_cancel_response{protocol = Protocol},
-                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
-                     ?ut_shutdown_cancel_tag, ?ut_response_tag,
-                     0:16#10/unit:8>>,
-                   16#16) end,
-    [1, 2]),
-
-  [DecodeTests, EncodeTests].
+  [RespTests, QueryTests].
 
 get_time_test_ () ->
-  DecodeTests = lists:map (fun (Protocol) ->
+  QueryTests = lists:map (fun (Protocol) ->
+      test_coders (#ut_get_time_response{protocol = Protocol, time = ?TIME},
+                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
+                     ?ut_get_time_tag, ?ut_response_tag, ?TIME:32,
+                     0:16#10/unit:8>>,
+                   16#1a) end,
+    [1, 2]),
+
+  RespTests = lists:map (fun (Protocol) ->
       Unknown6 = ?R (16#10 * 8),
-      test_decode (#ut_get_time_query{protocol  = Protocol,
+      test_coders (#ut_get_time_query{protocol  = Protocol,
                                       unknown_6 = Unknown6},
                    <<?ut_server_tag, (?M:encode_protocol (Protocol))/bytes,
                      ?ut_get_time_tag, ?ut_query_tag,
@@ -271,15 +279,10 @@ get_time_test_ () ->
                    16#16) end,
     [1, 2]),
 
-  EncodeTests = lists:map (fun (Protocol) ->
-      test_encode (#ut_get_time_response{protocol = Protocol, time = ?TIME},
-                   <<?ut_client_tag, (?M:encode_protocol (Protocol))/bytes,
-                     ?ut_get_time_tag, ?ut_response_tag, ?TIME:32,
-                     0:16#10/unit:8>>,
-                   16#1a) end,
-    [1, 2]),
+  [RespTests, QueryTests].
 
-  [DecodeTests, EncodeTests].
+test_coders (Rec, Packet, Size) ->
+  [test_encode (Rec, Packet, Size), test_decode (Rec, Packet, Size)].
 
 test_encode (Rec, Expected, Size) ->
   [{"The size of the encoded packet should be correct",
