@@ -1,7 +1,7 @@
 -module (ut_protocol).
 -include ("ut_protocol.hrl").
 
--export ([encode/1, decode/1]).
+-export ([encode/1, decode/1, encode_now/1]).
 
 -ifdef (TEST).
 -compile (export_all).
