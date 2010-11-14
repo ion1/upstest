@@ -175,12 +175,6 @@ client_id (ClientIPv4Addr, MonitorPort, RegisterTime) ->
 
 % Private functions.
 
-encode_protocol (1) -> <<?ut_protocol_1_tag>>;
-encode_protocol (2) -> <<?ut_protocol_2_tag>>.
-
-decode_protocol (<<?ut_protocol_1_tag>>) -> 1;
-decode_protocol (<<?ut_protocol_2_tag>>) -> 2.
-
 nth_byte (N, BitString) ->
   <<_Pre:N/bytes, Val, _Post/bytes>> = BitString,
   Val.
