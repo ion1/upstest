@@ -26,7 +26,6 @@ constants_test_ () ->
 
     ?_assertEqual (<<2, 16#10>>, <<?ut_protocol_1_tag>>),
     ?_assertEqual (<<2, 16#20>>, <<?ut_protocol_2_tag>>),
-    ?_assertEqual (2,            ?ut_protocol_length),
 
     ?_assertEqual (<<0>>,        <<?ut_query_tag>>),
     ?_assertEqual (<<1>>,        <<?ut_response_tag>>),
