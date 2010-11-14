@@ -1,7 +1,7 @@
 -module (ut_protocol).
 -include ("ut_protocol.hrl").
 
--export ([encode/1, decode/1, encode_now/1]).
+-export ([encode/1, decode/1, encode_now/1, client_id/3]).
 
 -ifdef (TEST).
 -compile (export_all).
@@ -158,14 +158,7 @@ encode_now (Now) ->
   {MegaS, S, _MicroS} = Now,
   1000000*MegaS + S + Shift.
 
-% Private functions.
-
-encode_protocol (1) -> <<?ut_protocol_1_tag>>;
-encode_protocol (2) -> <<?ut_protocol_2_tag>>.
-
-decode_protocol (<<?ut_protocol_1_tag>>) -> 1;
-decode_protocol (<<?ut_protocol_2_tag>>) -> 2.
-
+% Generate a client ID matching what the UPS does.
 client_id (ClientIPv4Addr, MonitorPort, RegisterTime) ->
   Hash = erlang:md5 (<<ClientIPv4Addr:32/bits, MonitorPort:16, RegisterTime:32>>),
 
@@ -179,6 +172,14 @@ client_id (ClientIPv4Addr, MonitorPort, RegisterTime) ->
     {[], RegisterTime}, lists:seq (0, 3)),
 
   list_to_bitstring (lists:reverse (Elems)).
+
+% Private functions.
+
+encode_protocol (1) -> <<?ut_protocol_1_tag>>;
+encode_protocol (2) -> <<?ut_protocol_2_tag>>.
+
+decode_protocol (<<?ut_protocol_1_tag>>) -> 1;
+decode_protocol (<<?ut_protocol_2_tag>>) -> 2.
 
 nth_byte (N, BitString) ->
   <<_Pre:N/bytes, Val, _Post/bytes>> = BitString,
